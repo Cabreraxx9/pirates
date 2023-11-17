@@ -50,7 +50,9 @@ class Ship (Context):
             else:
                 announce ("Give medicine to who?")
         else:
-            announce ("Error: Ship object doe not understand verb " + verb)
+            announce ("You can't " + verb)
+            config.the_player.go = False
+            
 
 
     def print (self):
