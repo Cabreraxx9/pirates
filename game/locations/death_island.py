@@ -19,7 +19,7 @@ class DemoIsland(location.Location):
         self.visitable = True #Marks the island as a place the pirates can visit
         self.locations = {} #Dictionary of sub-locations on the island
         self.locations["armory"] = Armory(self)
-        self.locations["shooting range"] = Shooting_Range(self)
+        self.locations["Forest"] = Forest(self)
         self.locations["bar"] = Bar(self)
         self.locations["cafe"] = Cafe(self)
         self.locations["bathroom"] = Bathroom(self)
@@ -37,7 +37,7 @@ class DemoIsland(location.Location):
         config.the_player.location = self.starting_location
         config.the_player.location.enter()  
         super().visit()    
-#Sub_locations(dock, armory, shooting range, bar, cafe, and bathroom)
+#Sub_locations(dock, armory, Forest, bar, cafe, and bathroom)
 class Dock(location.SubLocation):
     def __init__(self, main_location):
         super().__init__(main_location)
@@ -82,8 +82,8 @@ class Dock(location.SubLocation):
             config.the_player.next_loc = self.main_location.locations["bathroom"]
             #text will be printed by "enter" in Bathroom()
         if (verb == "south"):
-            config.the_player.next_loc = self.main_location.locations["shooting range"]
-            #text will be printed by "enter" in Shooting Range()
+            config.the_player.next_loc = self.main_location.locations["Forest"]
+            #text will be printed by "enter" in Forest()
        
 
 class Armory(location.SubLocation):
@@ -140,15 +140,17 @@ class Armory(location.SubLocation):
 
                 
                  
-class Shooting_Range(location.SubLocation):
+class Forest(location.SubLocation):
     def __init__(self, main_location):
         super().__init__(main_location)
-        self.name = "shooting range"
+        self.name = "Forest"
         self.verbs["north"] = self
         self.verbs["east"] = self
+        self.event_chance = 100
+        self.events.append(drowned_pirates.DrownedPirates())
         
     def enter(self):
-        announce ("You are now entering shooting range and see a glowing letter H down the range.")
+        announce ("You are now entering Forest and see a hoard of zombie pirates.")
     
     def process_verb(self, verb, cmd_list, nouns):
 
@@ -232,7 +234,7 @@ class Bathroom(location.SubLocation):
             
         if (verb == "east"):
             announce("you are heading toward the bathroom")
-            config.the_player.next_loc = self.main_location.locations["shooting range"]
+            config.the_player.next_loc = self.main_location.locations["Forest"]
 
         if (verb == "northwest"):
             announce("you are going back to the dock")
