@@ -101,11 +101,14 @@ class Armory(location.SubLocation):
         self.item_in_armory = Assault_Rifle()
     
     def enter (self):
-        description = "You walk into the armory on the island and see a glowing letter G near the weapon cache"
+        description = "You walk into the armory on the island"
         if self.item_in_armory != None:
 
          description = description + "and you see a " + self.item_in_armory.name + " in a weapon cache."
         announce(description)
+
+        if(self.item_in_armory == None):
+                announce("You see the secret letter G in the weapon cache.")
     
     def process_verb(self, verb, cmd_list, nouns):
     
@@ -129,7 +132,7 @@ class Armory(location.SubLocation):
                 at_least_one = False #Track if you pick up an item, print message if not.
                 item = self.item_in_armory
                 if item != None and (cmd_list[1] == item.name or cmd_list[1] == "all"):
-                    announce ("You take the "+item.name+" from the cache.")
+                    announce ("You take the "+item.name+" from the cache and found a secret letter 'G'.")
                     config.the_player.add_to_inventory([item])
                     self.item_in_armory = None
                     config.the_player.go = True
