@@ -255,9 +255,13 @@ class Katana(items.Item):
 class Assault_Rifle(items.Item):
     def __init__(self):
         super().__init__("assault-rifle", 400) #Note: price is in shillings (a silver coin, 20 per pound)
-        self.damage = (10,100)
+        self.damage = (50,150)
         self.firearm = True
-        self.charges = 1
+        self.charges = 12
         self.skill = "guns"
         self.verb = "shoot"
         self.verb2 = "shoots"
+    def recharge(self, owner):
+        if self.firearm == True and self.charges == 0 and owner.powder > 0:
+            self.charges = 12
+            owner.powder -= 1
