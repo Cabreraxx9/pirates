@@ -173,7 +173,7 @@ class Bar(location.SubLocation):
         self.verbs["southeast"] = self
     
     def enter(self):
-        announce ("You are now entering the bar and see a glowing letter O in a liqiour bottle.")
+        announce ("You are now entering the bar and see .")
     
     def process_verb(self, verb, cmd_list, nouns):
 
@@ -198,9 +198,21 @@ class Cafe(location.SubLocation):
         self.verbs["north"] = self
         self.verbs["south"] = self
         self.verbs["west"] = self
+
+        #Add a weapon to take!
+        self.verbs["take"] = self
+        self.item_in_cafe = Katana()
         
     def enter(self):
-        announce ("You are now entering a cafe and see a glowiing letter S in a coffee mug.")
+        announce ("You are now entering a cafe.")
+        description = "You walk into the cafe on the island"
+        if self.item_in_cafe != None:
+
+         description = description + "and you see a " + self.item_in_cafe.name + " next to a spoiled plate of food."
+        announce(description)
+
+        if(self.item_in_cafe == None):
+                announce("You see the secret letter H next to a spoiled plate of food.")
     
     def process_verb(self, verb, cmd_list, nouns):
 
@@ -216,6 +228,26 @@ class Cafe(location.SubLocation):
         if (verb == "west"):
             announce("you are going back to the dock")
             config.the_player.next_loc = self.main_location.locations["dock"]
+
+        if(verb == "take"):
+            #the player will type something like 'take katana"
+            if(self.item_in_cafe == None):
+                announce("you've already taken the katana")
+            #they just typed "take"
+            elif( len(cmd_list) < 2):
+                announce("Take what?")
+            else:
+                at_least_one = False #Track if you pick up an item, print message if not.
+                item = self.item_in_cafe
+                if item != None and (cmd_list[1] == item.name or cmd_list[1] == "all"):
+                    announce ("You take the "+item.name+" from a bloody pool of guts near a plate of spoiled food and found a secret letter 'H'.")
+                    config.the_player.add_to_inventory([item])
+                    self.item_in_cafe = None
+                    config.the_player.go = True
+                    at_least_one = True
+                
+                if at_least_one == False:
+                    announce ("You don't see one of those around.")
             
 class Bathroom(location.SubLocation):
     def __init__(self, main_location):
@@ -246,8 +278,8 @@ class Bathroom(location.SubLocation):
 
 class Katana(items.Item):
     def __init__(self):
-        super().__init__("cutlass", 5) #Note: price is in shillings (a silver coin, 20 per pound)
-        self.damage = (10,60)
+        super().__init__("katana", 5) #Note: price is in shillings (a silver coin, 20 per pound)
+        self.damage = (20,90)
         self.skill = "swords"
         self.verb = "slash"
         self.verb2 = "slashes"
