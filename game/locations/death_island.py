@@ -5,6 +5,8 @@ from game.display import announce
 import game.config as config
 import game.items as items
 from game.events import *
+import game.event as event
+import game.combat as combat
 
 #Demo island inherits from location (demo island is a location)
 
@@ -150,7 +152,7 @@ class Forest(location.SubLocation):
         self.verbs["north"] = self
         self.verbs["east"] = self
         self.event_chance = 100
-        self.events.append(drowned_pirates.DrownedPirates())
+        self.events.append(Zombies())
         
     def enter(self):
         announce ("You are now entering Forest and see a hoard of zombie pirates.")
@@ -163,7 +165,7 @@ class Forest(location.SubLocation):
         if (verb == "east"):
             announce("you are heading toward the bathroom")
             config.the_player.next_loc = self.main_location.locations["bathroom"]
-              
+        
 class Bar(location.SubLocation):
     def __init__(self, main_location):
         super().__init__(main_location)
@@ -297,3 +299,36 @@ class Assault_Rifle(items.Item):
         if self.firearm == True and self.charges == 0 and owner.powder > 0:
             self.charges = 12
             owner.powder -= 1
+
+class Zombies(event.Event):
+    '''
+    A combat encounter with a crew of zombies.
+    When the event is drawn, creates a combat encounter with 2 to 6 zombies, kicks control over to the combat code to resolve the fight, then adds itself and a simple success message to the result
+    '''
+
+    def __init__ (self):
+        self.name = "zombie attack"
+
+    def process (self, world):
+        
+        result = {}
+        result["message"] = "the zombies were killed and a secret letter 'o' is revealed out of a shot up torso!"
+        monsters = []
+        min = 2
+        uplim = 6
+        if random.randrange(2) == 0:
+            min = 1
+            uplim = 5
+            monsters.append(combat.Drowned("zombie boss"))
+            monsters[0].speed = 1.2*monsters[0].speed
+            monsters[0].health = 2*monsters[0].health
+        n_appearing = random.randrange(min, uplim)
+        n = 1
+        while n <= n_appearing:
+            monsters.append(combat.Drowned("zombie"+str(n)))
+            n += 1
+        announce ("You are attacked by a hoard of zombies")
+        combat.Combat(monsters).combat()
+        result["newevents"] = [ self ]
+        return result
+    
