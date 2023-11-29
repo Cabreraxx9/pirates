@@ -251,7 +251,7 @@ class Katana(items.Item):
 
 class Assault_Rifle(items.Item):
     def __init__(self):
-        super().__init__("assault rifle", 400) #Note: price is in shillings (a silver coin, 20 per pound)
+        super().__init__("assault-rifle", 400) #Note: price is in shillings (a silver coin, 20 per pound)
         self.damage = (10,100)
         self.firearm = True
         self.charges = 1
