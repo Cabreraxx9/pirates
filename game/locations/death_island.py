@@ -7,6 +7,7 @@ import game.items as items
 from game.events import *
 import game.event as event
 import game.combat as combat
+import random
 
 #Demo island inherits from location (demo island is a location)
 
@@ -21,7 +22,7 @@ class DemoIsland(location.Location):
         self.visitable = True #Marks the island as a place the pirates can visit
         self.locations = {} #Dictionary of sub-locations on the island
         self.locations["armory"] = Armory(self)
-        self.locations["Forest"] = Forest(self)
+        self.locations["forest"] = Forest(self)
         self.locations["bar"] = Bar(self)
         self.locations["cafe"] = Cafe(self)
         self.locations["bathroom"] = Bathroom(self)
@@ -33,7 +34,7 @@ class DemoIsland(location.Location):
     
     def enter(self, ship):
         #what to do when the ship visits this location on the map
-        announce("arrived at death island") 
+        announce("You've arrived at Death Island and your ship is floating next to a destroyed dock.") 
 #boiler plate code for starting a visit.
     def visit(self):
         config.the_player.location = self.starting_location
@@ -49,28 +50,20 @@ class Dock(location.SubLocation):
         self.verbs["north"] = self
         self.verbs["south"] = self
         self.verbs["east"] = self
+        self.verbs["west"] = self
         self.verbs["northeast"] = self
         self.verbs["southeast"] = self
         
     def enter(self):
-        announce ("You are now docking. Your ship is now docked at death island. You'll need a passcode to get back on the ship")
+        announce ("You are on a dock and you are standing next to your floating ship.")
     #one of the core function .Contains everything that
     #more complex actions should have dedicated functions to handle them
-    def passcode(self):
-        code = input("Enter the secret word to get back on the ship")
-        if code == "ghost":
-            return True
-        else:
-            return False
-                
+    
     def process_verb(self, verb, cmd_list, nouns):
         if (verb == "west"):
             announce("you return to your ship")
             #Boilerplater code that stops the visit
             #this calls my passcode function and set it equal to true
-        if self.passcode() == True:   
-            config.the_player.next_loc = config.the_player.ship
-            config.the_player.visiting = False
         if (verb == "north"):
             config.the_player.next_loc = self.main_location.locations["armory"]
             #text will be printed by "enter" in Armory()
@@ -84,7 +77,7 @@ class Dock(location.SubLocation):
             config.the_player.next_loc = self.main_location.locations["bathroom"]
             #text will be printed by "enter" in Bathroom()
         if (verb == "south"):
-            config.the_player.next_loc = self.main_location.locations["Forest"]
+            config.the_player.next_loc = self.main_location.locations["forest"]
             #text will be printed by "enter" in Forest()
        
 
@@ -92,11 +85,11 @@ class Armory(location.SubLocation):
     def __init__(self, main_location):
         super().__init__(main_location)
         self.name = "armory"
-        self.verbs["northeast"] = self
+        
         self.verbs["east"] = self
-        self.verbs["southeast"] = self
+              #to many verbs? same as process verbs
         self.verbs["south"] = self
-        self.verbs["west"] = self
+        
 
         #Add a weapon to take!
         self.verbs["take"] = self
@@ -106,7 +99,7 @@ class Armory(location.SubLocation):
         description = "You walk into the armory on the island"
         if self.item_in_armory != None:
 
-         description = description + "and you see a " + self.item_in_armory.name + " in a weapon cache."
+         description = description + " and you see a " + self.item_in_armory.name + " in a weapon cache."
         announce(description)
 
         if(self.item_in_armory == None):
@@ -148,10 +141,10 @@ class Armory(location.SubLocation):
 class Forest(location.SubLocation):
     def __init__(self, main_location):
         super().__init__(main_location)
-        self.name = "Forest"
+        self.name = "forest"
         self.verbs["north"] = self
         self.verbs["east"] = self
-        self.event_chance = 100
+        self.event_chance = 100   # making the event for the zombies 100 which will make the event happen so interaction with zombies will happen so user sees letter upon zombie defeat
         self.events.append(Zombies())
         
     def enter(self):
@@ -172,11 +165,25 @@ class Bar(location.SubLocation):
         self.name = "bar"
         self.verbs["east"] = self
         self.verbs["west"] = self
-        self.verbs["southeast"] = self
+        self.verbs["southwest"] = self #change this to match process verb
+        self.verbs["open"] = self
+
+         #Add a weapon to take!
+        self.verbs["take"] = self
+        self.item_in_bar = Grenade_Launcher()
+        self.bar_chest_open = False
+        
     
     def enter(self):
-        announce ("You are now entering the bar and see .")
-    
+        announce ("You are now entering the bar and see a letter 'T' glowing in a beer bottle pushed up against a secret door that could be opened. You could try to open ")
+
+    def passcode(self):
+        code = input("Enter the 5 letter word from each location to access a secret door behind the bar.")
+        if code == "ghost":
+            return True
+        else:
+            return False
+
     def process_verb(self, verb, cmd_list, nouns):
 
         if (verb == "west"):
@@ -191,8 +198,33 @@ class Bar(location.SubLocation):
         if (verb == "southwest"):
             announce("you are going back to the dock")
             config.the_player.next_loc = self.main_location.locations["dock"]
+        
+        if (verb == "open"):
+                    
+            if self.passcode() == True:
+               self.bar_chest_open = True   
+               announce("you see a grenade-launcher to take out of a treasure chest")   
             
-
+        if(verb == "take" and self.bar_chest_open == True):
+            
+            #the player will type something like 'take grenade-launcher"
+            if(self.item_in_bar == None):
+                announce("you've already taken the grenade-launcher")
+            #they just typed "take"
+            elif( len(cmd_list) < 2):
+                announce("Take what?")
+            else:
+                at_least_one = False #Track if you pick up an item, print message if not.
+                item = self.item_in_bar
+                if item != None and (cmd_list[1] == item.name or cmd_list[1] == "all"):
+                    announce ("You take the "+item.name+" from the treasure chest in the secret door.")
+                    config.the_player.add_to_inventory([item])
+                    self.item_in_bar = None
+                    config.the_player.go = True
+                    at_least_one = True
+                    
+                if at_least_one == False:
+                    announce ("You don't see one of those around.")
 class Cafe(location.SubLocation):
     def __init__(self, main_location):
         super().__init__(main_location)
@@ -207,7 +239,7 @@ class Cafe(location.SubLocation):
         
     def enter(self):
         announce ("You are now entering a cafe.")
-        description = "You walk into the cafe on the island"
+        description = "You walk into a deserted cafe on the island "
         if self.item_in_cafe != None:
 
          description = description + "and you see a " + self.item_in_cafe.name + " next to a spoiled plate of food."
@@ -260,7 +292,7 @@ class Bathroom(location.SubLocation):
         self.verbs["northwest"] = self
 
     def enter(self):
-        announce ("You are now in the bathroom and see a glowing letter T in the Toilet.")
+        announce ("You are now in the bathroom and see a glowing letter 'S' poking out of a pile of shit in the toilet.")
     
     def process_verb(self, verb, cmd_list, nouns):
 
@@ -270,14 +302,14 @@ class Bathroom(location.SubLocation):
             
             
         if (verb == "east"):
-            announce("you are heading toward the bathroom")
-            config.the_player.next_loc = self.main_location.locations["Forest"]
+            announce("you are heading toward the forest")
+            config.the_player.next_loc = self.main_location.locations["forest"]
 
         if (verb == "northwest"):
             announce("you are going back to the dock")
             config.the_player.next_loc = self.main_location.locations["dock"]
 
-
+#WEAPONS
 class Katana(items.Item):
     def __init__(self):
         super().__init__("katana", 5) #Note: price is in shillings (a silver coin, 20 per pound)
@@ -299,7 +331,25 @@ class Assault_Rifle(items.Item):
         if self.firearm == True and self.charges == 0 and owner.powder > 0:
             self.charges = 12
             owner.powder -= 1
+class Grenade_Launcher(items.Item):
+    def __init__(self):
+        super().__init__("grenade-launcher", 400) #Note: price is in shillings (a silver coin, 20 per pound)
+        self.damage = (50,500)
+        self.firearm = True
+        self.charges = 1
+        self.skill = "guns"
+        self.verb = "explode"
+        self.verb2 = "explodes"
+    def recharge(self, owner):
+        if self.firearm == True and self.charges == 0 and owner.powder > 0:
+            self.charges = 0
+            owner.powder -= 1
+    def pickTargets(self, action, attacker, allies, enemies):
+        
+        return enemies
 
+
+#ENEMIES
 class Zombies(event.Event):
     '''
     A combat encounter with a crew of zombies.
